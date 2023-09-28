@@ -336,6 +336,7 @@ def normalize_git_url(url):
 
 
 def install_extension_from_url(dirname, url, branch_name=None):
+    print("install_extension_from_url")
     check_access()
 
     if isinstance(dirname, str):
