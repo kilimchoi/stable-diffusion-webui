@@ -493,6 +493,7 @@ def network_MultiheadAttention_load_state_dict(self, *args, **kwargs):
 
 
 def list_available_networks():
+    print("enters list_available_networks")
     available_networks.clear()
     available_network_aliases.clear()
     forbidden_network_aliases.clear()
