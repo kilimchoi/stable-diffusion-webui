@@ -336,7 +336,7 @@ class Api:
                         script_args[alwayson_script.args_from + idx] = request.alwayson_scripts[alwayson_script_name]["args"][idx]
         return script_args
 
-    def encode_path_to_base64(path):
+    def encode_path_to_base64(self, path):
         f = open(path, 'rb')
         b64images = base64.b64encode(f.read())
         f.close()
@@ -390,7 +390,7 @@ class Api:
         if isinstance(processed.images[0], str):
             path = processed.images[0]
             b64images = []
-            b64images.append(encode_path_to_base64(path))
+            b64images.append(self.encode_path_to_base64(path))
         else:
             b64images = list(map(encode_pil_to_base64, processed.images)) if send_images else []
         return models.TextToImageResponse(images=b64images, parameters=vars(txt2imgreq), info=processed.js())
