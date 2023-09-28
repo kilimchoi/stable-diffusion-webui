@@ -289,6 +289,7 @@ class ExtraNetworksPage:
         """
         Find and read a description file for a given path (without extension).
         """
+        print("enters find_description in ui_extra_networks")
         for file in [f"{path}.txt", f"{path}.description.txt"]:
             try:
                 with open(file, "r", encoding="utf-8", errors="replace") as f:
