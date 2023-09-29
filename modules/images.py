@@ -453,8 +453,11 @@ class FilenameGenerator:
 
     def image_hash(self, *args):
         length = int(args[0]) if (args and args[0] != "") else None
-        return hashlib.sha256(self.image.tobytes()).hexdigest()[0:length]
-
+        if self.image is None:
+            return ''.join(random.choice('0123456789abcdef') for _ in range(length))
+        else:
+            return hashlib.sha256(self.image.tobytes()).hexdigest()[0:length]
+            
     def string_hash(self, text, *args):
         length = int(args[0]) if (args and args[0] != "") else 8
         return hashlib.sha256(text.encode()).hexdigest()[0:length]
@@ -606,7 +609,7 @@ def save_image(image, path, basename, seed=None, prompt=None, extension='png', i
     """
     if prompt is not None:
         prompt = prompt[:120]
-    namegen = FilenameGenerator(p, seed, prompt, image)
+    namegen = FilenameGenerator(p, seed, prompt)
 
     # WebP and JPG formats have maximum dimension limits of 16383 and 65535 respectively. switch to PNG which has a much higher limit
     if (image.height > 65535 or image.width > 65535) and extension.lower() in ("jpg", "jpeg") or (image.height > 16383 or image.width > 16383) and extension.lower() == "webp":
