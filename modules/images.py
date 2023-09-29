@@ -604,6 +604,8 @@ def save_image(image, path, basename, seed=None, prompt=None, extension='png', i
         txt_fullfn (`str` or None):
             If a text file is saved for this image, this will be its full path. Otherwise None.
     """
+    if prompt is not None:
+        prompt = prompt[:120]
     namegen = FilenameGenerator(p, seed, prompt, image)
 
     # WebP and JPG formats have maximum dimension limits of 16383 and 65535 respectively. switch to PNG which has a much higher limit
