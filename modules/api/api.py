@@ -103,34 +103,32 @@ def decode_base64_to_image(encoding):
 
 def encode_pil_to_base64(image):
     with io.BytesIO() as output_bytes:
-
-        if opts.samples_format.lower() == 'png':
-            use_metadata = False
-            metadata = PngImagePlugin.PngInfo()
-            for key, value in image.info.items():
-                if isinstance(key, str) and isinstance(value, str):
-                    metadata.add_text(key, value)
-                    use_metadata = True
-            image.save(output_bytes, format="PNG", pnginfo=(metadata if use_metadata else None), quality=opts.jpeg_quality)
-
-        elif opts.samples_format.lower() in ("jpg", "jpeg", "webp"):
-            if image.mode == "RGBA":
-                image = image.convert("RGB")
-            parameters = image.info.get('parameters', None)
-            exif_bytes = piexif.dump({
-                "Exif": { piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(parameters or "", encoding="unicode") }
-            })
-            if opts.samples_format.lower() in ("jpg", "jpeg"):
-                image.save(output_bytes, format="JPEG", exif = exif_bytes, quality=opts.jpeg_quality)
-            else:
-                image.save(output_bytes, format="WEBP", exif = exif_bytes, quality=opts.jpeg_quality)
-
+        if isinstance(image, str):
+            with open(image, "rb") as image_file:
+                output_bytes.write(image_file.read())
         else:
-            raise HTTPException(status_code=500, detail="Invalid image format")
+            if opts.samples_format.lower() == 'png':
+                use_metadata = False
+                metadata = PngImagePlugin.PngInfo()
+                for key, value in image.info.items():
+                    if isinstance(key, str) and isinstance(value, str):
+                        metadata.add_text(key, value)
+                        use_metadata = True
+                image.save(output_bytes, format="PNG", pnginfo=(metadata if use_metadata else None), quality=opts.jpeg_quality)
 
-        bytes_data = output_bytes.getvalue()
-
-    return base64.b64encode(bytes_data)
+            elif opts.samples_format.lower() in ("jpg", "jpeg", "webp"):
+                if image.mode == "RGBA":
+                    image = image.convert("RGB")
+                parameters = image.info.get('parameters', None)
+                exif_bytes = piexif.dump({
+                    "Exif": { piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(parameters or "", encoding="unicode") }
+                })
+                if opts.samples_format.lower() in ("jpg", "jpeg"):
+                    image.save(output_bytes, format="JPEG", exif = exif_bytes, quality=opts.jpeg_quality)
+                else:
+                    image.save(output_bytes, format="WEBP", exif = exif_bytes, quality=opts.jpeg_quality)
+            else:
+                raise HTTPException(status_code=500, detail="Invalid image format")
 
 
 def api_middleware(app: FastAPI):
@@ -335,12 +333,6 @@ class Api:
                     for idx in range(0, min((alwayson_script.args_to - alwayson_script.args_from), len(request.alwayson_scripts[alwayson_script_name]["args"]))):
                         script_args[alwayson_script.args_from + idx] = request.alwayson_scripts[alwayson_script_name]["args"][idx]
         return script_args
-
-    def encode_path_to_base64(self, path):
-        f = open(path, 'rb')
-        b64images = base64.b64encode(f.read())
-        f.close()
-        return b64images
         
     def text2imgapi(self, txt2imgreq: models.StableDiffusionTxt2ImgProcessingAPI):
         script_runner = scripts.scripts_txt2img
@@ -387,12 +379,7 @@ class Api:
                 finally:
                     shared.state.end()
                     shared.total_tqdm.clear()
-        if isinstance(processed.images[0], str):
-            path = processed.images[0]
-            b64images = []
-            b64images.append(self.encode_path_to_base64(path))
-        else:
-            b64images = list(map(encode_pil_to_base64, processed.images)) if send_images else []
+        b64images = list(map(encode_pil_to_base64, processed.images)) if send_images else []
         return models.TextToImageResponse(images=b64images, parameters=vars(txt2imgreq), info=processed.js())
 
     def img2imgapi(self, img2imgreq: models.StableDiffusionImg2ImgProcessingAPI):
